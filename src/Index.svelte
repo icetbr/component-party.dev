@@ -40,7 +40,10 @@
     history.replaceState({}, "", newUrl);
   }
 
-  const frameworkIdsFromURLKey = "f";
+  const FRAMEWORK_IDS_FROM_URL_KEY = "f";
+  const SITE_TITLE = "Component Party";
+  const MAX_FRAMEWORK_NB_INITIAL_DISPLAYED = 9;
+  const FRAMEWORKS_BONUS = FRAMEWORKS.slice(MAX_FRAMEWORK_NB_INITIAL_DISPLAYED);
 
   let frameworkIdsSelected = $state(new SvelteSet());
   let snippetsByFrameworkId = $state(new SvelteMap());
@@ -48,11 +51,26 @@
   let isVersusFrameworks = $state(false);
   let onMountCallbacks = $state(new SvelteSet());
   let isMounted = $state(false);
-  const siteTitle = "Component Party";
+
+  function handleVersus(versus) {
+    const fids = versus.split("-vs-");
+
+    if (fids.length !== 2) {
+      return;
+    }
+
+    const frameworks = fids.map(matchFrameworkId);
+
+    if (frameworks.some((f) => !f)) {
+      return;
+    }
+
+    return frameworks;
+  }
 
   const unsubscribeCurrentRoute = currentRoute.subscribe(($currentRoute) => {
     isVersusFrameworks = false;
-    document.title = siteTitle;
+    document.title = SITE_TITLE;
 
     if ($currentRoute.path === "/") {
       if (isMounted) {
@@ -66,11 +84,13 @@
       const versusFrameworks = handleVersus($currentRoute.params.versus);
       if (versusFrameworks) {
         isVersusFrameworks = true;
-        frameworkIdsSelected = new SvelteSet(versusFrameworks.map((f) => f.id));
+        for (const versusFramework of versusFrameworks) {
+          frameworkIdsSelected.add(versusFramework.id);
+        }
         frameworkIdsSelectedInitialized = true;
         document.title = `${versusFrameworks
           .map((f) => f.title)
-          .join(" vs ")} - ${siteTitle}`;
+          .join(" vs ")} - ${SITE_TITLE}`;
       } else {
         navigate("/");
       }
@@ -89,7 +109,9 @@
 
     const url = new URL(window.location.href);
 
-    const frameworkIdsFromURLStr = url.searchParams.get(frameworkIdsFromURLKey);
+    const frameworkIdsFromURLStr = url.searchParams.get(
+      FRAMEWORK_IDS_FROM_URL_KEY
+    );
 
     if (frameworkIdsFromURLStr) {
       const frameworkIdsFromURL = frameworkIdsFromURLStr
@@ -98,7 +120,7 @@
       if (frameworkIdsFromURL.length > 0) {
         frameworkIdsSelectedOnInit = frameworkIdsFromURL;
       } else {
-        removeSearchParamKeyFromURL(frameworkIdsFromURLKey);
+        removeSearchParamKeyFromURL(FRAMEWORK_IDS_FROM_URL_KEY);
       }
     }
 
@@ -115,7 +137,10 @@
       frameworkIdsSelectedOnInit = ["react", "svelte5"];
     }
 
-    frameworkIdsSelected = new SvelteSet(frameworkIdsSelectedOnInit);
+    for (const fid of frameworkIdsSelectedOnInit) {
+      frameworkIdsSelected.add(fid);
+    }
+
     frameworkIdsSelectedInitialized = true;
   }
 
@@ -125,12 +150,11 @@
       callback();
     }
     onMountCallbacks.clear();
-    onMountCallbacks = onMountCallbacks;
   });
 
   function saveFrameworkIdsSelectedOnStorage() {
     frameworkIdsStorage.setJSON([...frameworkIdsSelected]);
-    removeSearchParamKeyFromURL(frameworkIdsFromURLKey);
+    removeSearchParamKeyFromURL(FRAMEWORK_IDS_FROM_URL_KEY);
   }
 
   function toggleFrameworkId(frameworkId) {
@@ -168,44 +192,27 @@
     );
   });
 
-  const MAX_FRAMEWORK_NB_INITIAL_DISPLAYED = 9;
-
-  const FRAMEWORKS_INITIAL_DISPLAYED = FRAMEWORKS.slice(
-    0,
-    MAX_FRAMEWORK_NB_INITIAL_DISPLAYED
-  );
-
-  const FRAMEWORKS_MORE = FRAMEWORKS.slice(MAX_FRAMEWORK_NB_INITIAL_DISPLAYED);
+  let showBonusFrameworks = $state(false);
 
   const frameworksSelected = $derived(
     [...frameworkIdsSelected].map(matchFrameworkId)
   );
 
+  const bonusFrameworks = $derived(
+    FRAMEWORKS_BONUS.filter((f) => !frameworkIdsSelected.has(f.id))
+  );
+
   const frameworksNotSelected = $derived(
-    FRAMEWORKS_INITIAL_DISPLAYED.filter((f) => !frameworkIdsSelected.has(f.id))
+    FRAMEWORKS.filter((f) => !frameworkIdsSelected.has(f.id))
   );
 
-  const frameworksMoreNotSelected = $derived(
-    FRAMEWORKS_MORE.filter((f) => !frameworkIdsSelected.has(f.id))
-  );
-
-  let showBonusFrameworks = $state(false);
-
-  function handleVersus(versus) {
-    const fids = versus.split("-vs-");
-
-    if (fids.length !== 2) {
-      return;
-    }
-
-    const frameworks = fids.map(matchFrameworkId);
-
-    if (frameworks.some((f) => !f)) {
-      return;
-    }
-
-    return frameworks;
-  }
+  const headerFrameworks = $derived([
+    ...frameworksSelected,
+    ...frameworksNotSelected.filter(
+      (f) => !bonusFrameworks.find((bf) => bf.id === f.id)
+    ),
+    ...(showBonusFrameworks ? bonusFrameworks : []),
+  ]);
 </script>
 
 <AppNotificationCenter />
@@ -219,7 +226,7 @@
       class="flex px-6 lg:px-20 py-2 sticky top-0 z-20 w-full backdrop-blur bg-gray-900/80 border-b border-gray-700 whitespace-nowrap overflow-x-auto"
       data-framework-id-selected-list={[...frameworkIdsSelected].join(",")}
     >
-      {#each [...frameworksSelected, ...frameworksNotSelected] as framework (framework.id)}
+      {#each headerFrameworks as framework}
         <button
           title={frameworkIdsSelected.has(framework.id)
             ? `Hide ${framework.title}`
@@ -240,22 +247,7 @@
           <FrameworkLabel id={framework.id} size={15} />
         </button>
       {/each}
-      {#if showBonusFrameworks}
-        {#each frameworksMoreNotSelected as framework (framework.id)}
-          <button
-            title={`Display ${framework.title}`}
-            class={c(
-              "text-sm flex-shrink-0 rounded border border-gray-700 px-3 py-1 border-opacity-50 bg-gray-900 hover:bg-gray-800 transition-all mr-2",
-              frameworkIdsSelected.has(framework.id)
-                ? "border-blue-500"
-                : "opacity-70"
-            )}
-            onclick={() => toggleFrameworkId(framework.id)}
-          >
-            <FrameworkLabel id={framework.id} size={15} />
-          </button>
-        {/each}
-      {:else if frameworksMoreNotSelected.length > 0}
+      {#if bonusFrameworks.length > 0 && !showBonusFrameworks}
         <button
           title="show more frameworks"
           class="opacity-70 text-sm flex-shrink-0 rounded border border-gray-700 px-3 py-1 border-opacity-50 bg-gray-900 hover:bg-gray-800 transition-all mr-2"
