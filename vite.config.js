@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import react from "@vitejs/plugin-react";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Eta } from "eta";
@@ -87,6 +88,7 @@ export default defineConfig({
     pluginGenerateFrameworkContent(),
     imba(),
     svelte(),
+    react(),
     svelteInspector(), // https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/inspector.md
     generateHtmlPagesPlugin([
       ...footerLinks.map((link) => ({
