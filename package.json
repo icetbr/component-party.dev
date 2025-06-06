@@ -74,7 +74,7 @@
     "husky": "^9.1.7",
     "imba": "2.0.0-alpha.238",
     "lint-staged": "^15.5.0",
-    "lit": "^3.2.1",
+    "lit": "^3.3.0",
     "lodash.kebabcase": "^4.1.1",
     "markdown-it": "^14.1.0",
     "micache": "^2.4.1",
