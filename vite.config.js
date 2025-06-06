@@ -88,7 +88,16 @@ export default defineConfig({
     pluginGenerateFrameworkContent(),
     imba(),
     svelte(),
-    react(),
+    react({
+      babel: {
+        plugins: [
+          [
+            "@babel/plugin-proposal-decorators",
+            { decoratorsBeforeExport: true },
+          ],
+        ],
+      },
+    }),
     svelteInspector(), // https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/inspector.md
     generateHtmlPagesPlugin([
       ...footerLinks.map((link) => ({
