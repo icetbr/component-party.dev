@@ -3,6 +3,7 @@
 
   const response = useFetchUsers();
   const {isLoading, error, users} = $derived(response);
+  // const {isLoading, error, users} = $derived.by(useFetchUsers); // one line alternative; see https://github.com/sveltejs/svelte/issues/11441
 </script>
 
 {#if isLoading}
