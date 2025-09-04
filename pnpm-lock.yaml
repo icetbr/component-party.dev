@@ -5042,7 +5042,7 @@ snapshots:
 
   '@eslint-community/eslint-utils@4.4.1(eslint@8.57.0)':
     dependencies:
-      eslint: 8.57.0
+      eslint: 9.25.1(jiti@2.4.2)
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.1': {}
