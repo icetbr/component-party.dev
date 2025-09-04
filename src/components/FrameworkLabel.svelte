@@ -5,9 +5,10 @@
 
   const framework = $derived(FRAMEWORKS.find((f) => f.id === id));
 
-  const baseURL = import.meta.env.DEV
-    ? "/"
-    : "https://raw.githubusercontent.com/matschik/component-party/main/public/";
+  const baseURL = "/";
+  // const baseURL = import.meta.env.DEV
+  //   ? "/"
+  //   : "https://raw.githubusercontent.com/icetbr/component-party/main/public/";
 </script>
 
 <div class="flex items-center space-x-1">
