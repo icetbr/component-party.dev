@@ -517,7 +517,7 @@ const frameworks = [
     title: "Imba",
     frameworkName: "Imba",
     isCurrentVersion: true,
-    img: "framework/imba.png",
+    img: "framework/imba.svg",
     eslint: {
       files: ["**/*.imba"],
       rules: {
